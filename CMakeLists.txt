@@ -1,7 +1,5 @@
-cmake_minimum_required(VERSION 3.7.2)
-project(physics)
-
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.10.0)
+project(LAB5 VERSION 0.1.0 LANGUAGES C CXX)
 
 # Пытаемся найти предустановленный SFML
 find_package(SFML COMPONENTS graphics)
@@ -31,12 +29,42 @@ if (MSVC)
     add_definitions(-D_USE_MATH_DEFINES)
 endif ()
 
-add_executable(physics
-        main.cpp World.cpp Ball.cpp Physics.cpp Color.cpp Painter.cpp
-        black_box/Application.cpp black_box/View.cpp black_box/PainterImpl.cpp)
-target_link_libraries(physics PRIVATE sfml-graphics)
+if (WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static -static-libgcc -static-libstdc++ -s")
+endif ()
 
-target_compile_options(physics PRIVATE
+
+add_executable(LAB5
+        src/main.cpp src/World.cpp src/Ball.cpp src/Physics.cpp src/Color.cpp src/Painter.cpp
+        black_box/Application.cpp black_box/View.cpp black_box/PainterImpl.cpp src/dust.cpp)
+target_link_libraries(LAB5 PRIVATE sfml-graphics)
+
+target_compile_options(LAB5 PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
         )
+
+
+set(CPACK_PACKAGE_NAME "LAB5")
+
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP")
+endif()
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ivan Obuhov <vanushabrend@gmail.com>")
+endif()
+
+install(TARGETS LAB5 DESTINATION bin)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/data" DESTINATION bin)
+
+add_custom_command(TARGET LAB5 POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/data"
+        "$<TARGET_FILE_DIR:LAB5>/data"
+)
+
+include(CPack)

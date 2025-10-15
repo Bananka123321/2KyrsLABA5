@@ -1,6 +1,7 @@
 #include "World.h"
 #include "Painter.h"
 #include <fstream>
+#include <algorithm>
 
 // Длительность одного тика симуляции.
 // Подробнее см. update()
@@ -26,50 +27,19 @@ World::World(const std::string& worldFilePath) {
     stream >> topLeft.x >> topLeft.y >> bottomRight.x >> bottomRight.y;
     physics.setWorldBox(topLeft, bottomRight);
 
-    /**
-     * TODO: хорошее место для улучшения.
-     * (x, y) и (vx, vy) - составные части объекта, также
-     * как и (red, green, blue). Опять же, можно упростить
-     * этот код, научившись читать сразу Point, Color...
-     */
-    double x;
-    double y;
-    double vx;
-    double vy;
+    Point position;
+    Velocity velocity;
+    Color color;
     double radius;
-
-    double red;
-    double green;
-    double blue;
-
     bool isCollidable;
 
-    // Здесь не хватает обработки ошибок, но на текущем
-    // уровне прохождения курса нас это устраивает
-    while (stream.peek(), stream.good()) {
-        // Читаем координаты центра шара (x, y) и вектор
-        // его скорости (vx, vy)
-        stream >> x >> y >> vx >> vy;
-        // Читаем три составляющие цвета шара
-        stream >> red >> green >> blue;
-        // Читаем радиус шара
-        stream >> radius;
-        // Читаем свойство шара isCollidable, которое
-        // указывает, требуется ли обрабатывать пересечение
-        // шаров как столкновение. Если true - требуется.
-        // В базовой части задания этот параметр
-        stream >> std::boolalpha >> isCollidable;
+    while (stream >> position >> velocity >> color >> radius >> std::boolalpha >> isCollidable) { balls.emplace_back(position, velocity, radius, color, isCollidable); }
 
-        // TODO: место для доработки.
-        // Здесь не хватает самого главного - создания
-        // объекта класса Ball со свойствами, прочитанными
-        // выше, и его помещения в контейнер balls
-
-        // После того как мы каким-то образом
-        // сконструируем объект Ball ball;
-        // добавьте его в конец контейнера вызовом
-        // balls.push_back(ball);
-    }
+    physics.setCollisionCallback([this](const Point& pos, const Color& color) {
+        for (int i = 0; i < 15; ++i) {
+            dusts.push_back(Dust::randomParticle(pos, color));
+        }
+    });
 }
 
 /// @brief Отображает состояние мира
@@ -77,6 +47,10 @@ void World::show(Painter& painter) const {
     // Рисуем белый прямоугольник, отображающий границу
     // мира
     painter.draw(topLeft, bottomRight, Color(1, 1, 1));
+
+    for (const Dust& d : dusts) {
+        d.draw(painter);
+    }
 
     // Вызываем отрисовку каждого шара
     for (const Ball& ball : balls) {
@@ -107,4 +81,10 @@ void World::update(double time) {
     restTime = time - double(ticks) * timePerTick;
 
     physics.update(balls, ticks);
+
+    for (auto& d : dusts)
+        d.update(timePerTick);
+
+    // dusts.erase(std::remove_if(dusts.begin(), dusts.end(),
+    //     [](const Dust& d) { return !d.isAlive(); }), dusts.end());
 }

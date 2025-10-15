@@ -27,8 +27,7 @@ class Painter {
      * @param bottomRight координата нижнего правого угла
      * @param color цвет заливки
      */
-    void draw(const Point& topLeft, const Point& bottomRight,
-              const Color& color);
+    void draw(const Point& topLeft, const Point& bottomRight, const Color& color);
 
   private:
     std::unique_ptr<PainterImpl> impl;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../Point.h"
+#include "../src/Point.h"
 
 class View {
   public:
